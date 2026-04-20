@@ -1,0 +1,272 @@
+body{
+
+margin:0;
+padding:0;
+font-family:Arial, Helvetica, sans-serif;
+
+background: radial-gradient(circle at top,#2a2a2a,#000);
+
+color:white;
+
+height:100vh;
+overflow:hidden;
+
+}
+
+
+/* PANTALLA INICIAL */
+
+.intro{
+
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+
+height:100vh;
+
+background-image:url("https://images.unsplash.com/photo-1608889175123-8ee3625fa6e2");
+background-size:cover;
+background-position:center;
+
+}
+
+
+/* LOGO */
+
+.logo-container{
+
+margin-bottom:40px;
+
+animation:logoEntrada 2s ease;
+
+}
+
+.logo{
+
+width:420px;
+
+filter:drop-shadow(0px 0px 20px #000);
+
+}
+
+
+/* BOTON */
+
+.btn-play{
+
+padding:18px 50px;
+
+font-size:20px;
+
+border:none;
+
+border-radius:10px;
+
+background:linear-gradient(45deg,#c9a63b,#e8d084);
+
+color:black;
+
+cursor:pointer;
+
+transition:0.3s;
+
+}
+
+.btn-play:hover{
+
+transform:scale(1.1);
+
+box-shadow:0px 0px 20px #c9a63b;
+
+}
+
+
+/* ANIMACION LOGO */
+
+@keyframes logoEntrada{
+
+from{
+
+transform:translateY(-80px);
+opacity:0;
+
+}
+
+to{
+
+transform:translateY(0);
+opacity:1;
+
+}
+
+}
+
+/* PANTALLA LOGIN */
+
+.login-screen{
+
+height:100vh;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+background-image:url("https://images.unsplash.com/photo-1519681393784-d120267933ba");
+
+background-size:cover;
+background-position:center;
+
+}
+
+/* PANEL */
+
+.login-panel{
+
+width:380px;
+
+background:rgba(0,0,0,0.85);
+
+padding:40px;
+
+border-radius:12px;
+
+text-align:center;
+
+box-shadow:0px 0px 30px black;
+
+}
+
+/* TITULOS */
+
+.login-panel h1{
+
+color:#c9a63b;
+
+margin-bottom:10px;
+
+}
+
+.login-panel h2{
+
+margin-bottom:30px;
+
+}
+
+/* INPUTS */
+
+.login-panel input{
+
+width:100%;
+
+padding:12px;
+
+margin-bottom:15px;
+
+border:none;
+
+border-radius:6px;
+
+font-size:16px;
+
+}
+
+/* REGISTRO */
+
+.registro{
+
+margin-top:20px;
+
+}
+
+.registro a{
+
+color:#c9a63b;
+
+text-decoration:none;
+
+font-weight:bold;
+
+}
+/* MENU DEL JUEGO */
+
+.menu-screen{
+
+height:100vh;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+background-image:url("https://images.unsplash.com/photo-1503264116251-35a269479413");
+
+background-size:cover;
+background-position:center;
+
+}
+
+/* PANEL */
+
+.menu-panel{
+
+background:rgba(0,0,0,0.85);
+
+padding:50px;
+
+border-radius:12px;
+
+text-align:center;
+
+width:420px;
+
+box-shadow:0px 0px 40px black;
+
+}
+
+/* TITULO */
+
+.titulo-juego{
+
+color:#c9a63b;
+
+font-size:40px;
+
+margin-bottom:40px;
+
+}
+
+/* BOTONES */
+
+.menu-btn{
+
+display:block;
+
+width:100%;
+
+margin:12px 0;
+
+padding:15px;
+
+font-size:18px;
+
+border:none;
+
+border-radius:8px;
+
+cursor:pointer;
+
+background:linear-gradient(45deg,#c9a63b,#e8d084);
+
+color:black;
+
+transition:0.3s;
+
+}
+
+.menu-btn:hover{
+
+transform:scale(1.05);
+
+box-shadow:0px 0px 20px #c9a63b;
+
+}

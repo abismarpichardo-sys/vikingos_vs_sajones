@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Principal - Vikingos vs Sajones</title>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            color: #c5a059;
+            font-family: 'MedievalSharp', cursive;
+            /* Fondo de ambiente */
+            background: radial-gradient(circle, #1a1612 0%, #000 100%);
+        }
+
+        .menu-panel {
+            background: rgba(26, 22, 18, 0.9);
+            padding: 50px;
+            border: 3px solid #c5a059;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            text-align: center;
+            border-radius: 8px;
+            width: 400px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        .botones-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        button {
+            background: #2a241e;
+            color: #c5a059;
+            border: 2px solid #c5a059;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #c5a059;
+            color: #1a1612;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div class="menu-panel">
+    <h1 id="bienvenida">Bienvenido, Guerrero</h1>
+    
+    <div class="botones-menu">
+        <button onclick="window.location.href='/game'">⚔ JUGAR (Entrar al Mapa)</button>
+        <button onclick="window.location.href='/seleccion'">👤 VOLVER AL PERFIL</button>
+        <button onclick="window.location.href='/'">🚪 SALIR</button>
+    </div>
+</div>
+
+<script>
+    // IMPORTANTE: Usamos "nombreJugador" que es como lo guardamos en seleccion.html
+    const nombre = localStorage.getItem("nombreJugador");
+    
+    if (nombre) {
+        document.getElementById("bienvenida").innerText = "Bienvenido, " + nombre;
+    }
+</script>
+
+</body>
+</html>

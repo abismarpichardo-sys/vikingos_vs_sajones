@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vikingos vs Sajones - Inicio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=MedievalSharp&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Contenedor principal con paisaje de fondo */
+        .intro {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            /* Reemplaza esta URL por un paisaje de montañas, fiordos o un castillo medieval */
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)),
+                url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80'); 
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* Overlay de partículas/humo sutil (mantiene el concepto del radar pero estilo ceniza) */
+        .intro::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(255, 150, 0, 0.05) 0px, transparent 2px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .logo-container {
+            z-index: 2;
+            margin-bottom: 50px;
+            text-align: center;
+            animation: flotar 4s ease-in-out infinite;
+        }
+
+        .logo {
+            max-width: 550px;
+            /* Brillo color fuego/oro */
+            filter: drop-shadow(0 0 20px rgba(255, 100, 0, 0.6));
+        }
+
+        .boton-container {
+            z-index: 2;
+        }
+
+        .btn-play {
+            background: rgba(20, 20, 20, 0.8);
+            /* Borde estilo bronce/oro */
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            padding: 22px 60px;
+            font-size: 1.6em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            /* Forma de escudo/hacha */
+            clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%);
+            font-family: 'MedievalSharp', cursive;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .btn-play::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-play:hover::after {
+            left: 100%;
+        }
+
+        .btn-play:hover {
+            background: #d4af37;
+            color: #1a1a1a;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.8);
+            transform: scale(1.05) translateY(-5px);
+            text-shadow: none;
+        }
+
+        @keyframes flotar {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-25px) rotate(1deg); }
+        }
+
+        /* Viñeta para centrar la atención */
+        .vignette {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 200px rgba(0,0,0,0.9);
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="intro">
+    <div class="vignette"></div>
+
+    <div class="logo-container">
+        <img src="/images/logo.png" alt="Vikingos vs Sajones" class="logo">
+    </div>
+
+    <div class="boton-container">
+        <a href="/templates/login.html">
+            <button class="btn-play">INICIAR CONQUISTA</button>
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Vikingos vs Sajones</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=MedievalSharp&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* 1. ASEGURAR QUE EL FONDO OCUPE TODO EL ALTO Y ANCHO */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%; /* Muy importante: el alto total del navegador */
+            width: 100%; /* El ancho total del navegador */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'MedievalSharp', cursive, serif;
+            color: #e0e0e0;
+            overflow: hidden; /* Evita barras de desplazamiento no deseadas */
+            
+            /* 2. PROPIEDADES DE LA IMAGEN DE FONDO */
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9)), /* Capa de oscurecimiento */
+                url('https://images.unsplash.com/photo-1444492417251-9c84a5fa1c8b?auto=format&fit=crop&w=1920&q=80'); /* URL de tu imagen */
+            
+            background-repeat: no-repeat; /* No repite la imagen si es pequeña */
+            background-size: cover; /* ¡LA CLAVE! Escala la imagen para cubrir todo el contenedor sin estirarla, puede recortar un poco los bordes para mantener la proporción */
+            background-position: center; /* Centra la imagen para que el recorte sea simétrico */
+            background-attachment: fixed; /* Opcional: el fondo se queda quieto al hacer scroll (si lo hubiera) */
+        }
+
+        /* Contenedor de pantalla completa */
+        .login-screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Panel de Login estilo Pergamino Oscuro o Cofre */
+        .login-panel {
+            background: rgba(26, 22, 18, 0.95); /* Fondo semitransparente para ver el fondo */
+            padding: 50px 40px;
+            /* Borde doble estilo herraje antiguo */
+            border: 2px solid #c5a059;
+            outline: 6px solid rgba(197, 160, 89, 0.1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 
+                        inset 0 0 30px rgba(197, 160, 89, 0.05);
+            width: 380px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(5px); /* Efecto de desenfoque detrás del panel */
+        }
+
+        /* Esquinas ornamentales (opcional pero muy medieval) */
+        .login-panel::before {
+            content: "⚔";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1612;
+            padding: 0 10px;
+            color: #c5a059;
+            font-size: 1.5em;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            color: #d4af37; /* Oro más brillante */
+            font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 5px 0;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+
+        h2 {
+            font-weight: 300;
+            font-size: 0.9em;
+            color: #d2b48c;
+            margin-bottom: 35px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            opacity: 0.8;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Inputs estilizados como piedra tallada o cuero */
+        input {
+            background: #0f0d0b;
+            border: 1px solid #5d4e3a;
+            padding: 15px;
+            color: #f0e68c;
+            outline: none;
+            transition: all 0.3s;
+            font-family: inherit;
+            font-size: 1em;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        input:focus {
+            border-color: #d4af37;
+            background: #1a1612;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+        }
+
+        input::placeholder {
+            color: #5d4e3a;
+            font-style: italic;
+        }
+
+        /* Botón estilo "Hacha de Guerra" */
+        .btn-play {
+            background: linear-gradient(145deg, #c5a059 0%, #8e6d31 100%);
+            color: #1a1612;
+            border: none;
+            padding: 18px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-top: 15px;
+            letter-spacing: 2px;
+            font-family: 'Cinzel', serif;
+            clip-path: polygon(5% 0, 100% 0, 95% 100%, 0% 100%);
+        }
+
+        .btn-play:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(197, 160, 89, 0.6);
+            filter: brightness(1.2);
+        }
+
+        .btn-play:active {
+            transform: scale(0.98);
+        }
+
+        .registro {
+            margin-top: 25px;
+            font-size: 0.9em;
+            color: #7a6b5a;
+        }
+
+        .registro a {
+            color: #c5a059;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+            border-bottom: 1px solid transparent;
+        }
+
+        .registro a:hover {
+            color: #d4af37;
+            border-bottom: 1px solid #d4af37;
+            text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Viñeta para oscurecer los bordes de la pantalla */
+        .vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="vignette"></div>
+
+<div class="login-screen">
+    <div class="login-panel" id="loginPanel">
+        <h1>Vikingos vs Sajones</h1>
+        <h2>Entrar al Reino</h2>
+        
+        <form action="/login" method="POST">
+            <input type="text" name="username" placeholder="Tu Nombre de Guerrero" required>
+            <input type="password" name="password" placeholder="Tu Clave Secreta" required>
+            <button class="btn-play" type="submit">RECLAMAR DESTINO</button>
+        </form>
+
+        <p class="registro">
+            ¿Aún no has jurado lealtad? 
+            <a href="register.html">Crear cuenta</a>
+        </p>
+    </div>
+</div>
+
+<script src="/js/login.js"></script>
+
+</body>
+</html>
