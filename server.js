@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const fs = require("fs"); 
 const app = express();
 
+// --- ⚙️ CONFIGURACIÓN Y MIDDLEWARES ---
 app.use(bodyParser.json()); 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -12,7 +13,6 @@ const templates = path.join(__dirname, "public/templates");
 const DB_PATH = path.join(__dirname, "usuarios.db");
 
 // --- 📊 CARGA INICIAL DE BASE DE DATOS ---
-// Intentamos leer el archivo. Si no existe, inicializamos como objeto vacío.
 let baseDatosSimulada = {};
 if (fs.existsSync(DB_PATH)) {
     try {
@@ -40,14 +40,12 @@ app.post("/api/guardar-personaje", (req, res) => {
         return res.status(400).json({ success: false, message: "Datos incompletos" });
     }
 
-    // 1. Inicializar usuario si no existe
     if (!baseDatosSimulada[usuarioId]) {
         baseDatosSimulada[usuarioId] = { bando: bando, personajes: [] };
     }
 
     const cuenta = baseDatosSimulada[usuarioId];
 
-    // 2. REGLA: Validar bando único
     if (cuenta.bando && cuenta.bando !== bando) {
         return res.status(400).json({ 
             success: false, 
@@ -55,16 +53,7 @@ app.post("/api/guardar-personaje", (req, res) => {
         });
     }
 
-    // 3. REGLA: Máximo 4 personajes
     const slotNum = parseInt(slotIndex);
-    if (cuenta.personajes.length >= 4 && !cuenta.personajes.find(p => p.slot === slotNum)) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "Límite de 4 guerreros alcanzado." 
-        });
-    }
-
-    // 4. Guardar o Actualizar en el slot correspondiente
     const nuevoPersonaje = { nombre: nombreHeroe, clase, bando, slot: slotNum };
     const indexExistente = cuenta.personajes.findIndex(p => p.slot === slotNum);
 
@@ -74,21 +63,46 @@ app.post("/api/guardar-personaje", (req, res) => {
         cuenta.personajes.push(nuevoPersonaje);
     }
 
-    // --- 💾 GUARDADO FÍSICO EN ARCHIVO ---
-    // Esto evita que los datos se borren al reiniciar el servidor
+    // Guardar en disco
     try {
         fs.writeFileSync(DB_PATH, JSON.stringify(baseDatosSimulada, null, 2));
-        console.log(`💾 Guardado en disco: ${nombreHeroe} para el usuario ${usuarioId}`);
+        console.log(`💾 Personaje guardado: ${nombreHeroe} para ${usuarioId}`);
     } catch (err) {
-        console.error("❌ Error guardando en el archivo usuarios.db:", err);
+        console.error("❌ Error guardando en usuarios.db:", err);
     }
 
-    // 🚩 LOG LIMPIO EN TERMINAL
-    console.log(`-------------------------------------------`);
-    console.log(`[LOG] Guerrero: ${usuarioId} | Héroe: ${nombreHeroe} | Clase: ${clase} | Slot: ${slotNum}`);
-    console.log(`-------------------------------------------`);
-
     res.json({ success: true, bandoAsignado: cuenta.bando });
+});
+
+// --- 📝 RUTA: REGISTRO DE NUEVOS USUARIOS ---
+app.post("/registro", (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).send("Nombre de usuario y contraseña son requeridos.");
+    }
+
+    // Verificar si el usuario ya existe
+    if (baseDatosSimulada[username]) {
+        return res.send("El nombre de guerrero ya está en uso. <a href='/login-page'>Intenta iniciar sesión</a>");
+    }
+
+    // Crear el nuevo usuario
+    baseDatosSimulada[username] = {
+        password: password, // Nota: En producción usar bcrypt para encriptar
+        bando: null,
+        personajes: []
+    };
+
+    // Persistir en el archivo .db
+    try {
+        fs.writeFileSync(DB_PATH, JSON.stringify(baseDatosSimulada, null, 2));
+        console.log(`✨ Nuevo guerrero registrado: ${username}`);
+        res.redirect("/login-page"); // Redirige al login tras éxito
+    } catch (err) {
+        console.error("❌ Error al escribir en usuarios.db:", err);
+        res.status(500).send("Error interno al crear la cuenta.");
+    }
 });
 
 // --- 🗺️ RUTAS DE NAVEGACIÓN ---
@@ -100,14 +114,15 @@ app.get("/menu", (req, res) => res.sendFile(path.join(templates, "menu.html")));
 app.get("/game", (req, res) => res.sendFile(path.join(templates, "game.html")));
 
 app.post("/login", (req, res) => {
+    // Aquí podrías validar la contraseña contra baseDatosSimulada[username].password
     res.redirect("/perfil");
 });
 
-// --- 🚀 INICIO ---
+// --- 🚀 INICIO DEL SERVIDOR ---
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`-------------------------------------------`);
-    console.log(`⚔️  SISTEMA DE SLOTS CON PERSISTENCIA ACTIVO ⚔️`);
-    console.log(`📍 Accede aquí: http://localhost:${PORT}`);
+    console.log(`⚔️  SISTEMA DE VIKINGOS VS SAJONES ACTIVO ⚔️`);
+    console.log(`📍 URL: http://localhost:${PORT}`);
     console.log(`-------------------------------------------`);
 });
