@@ -99,7 +99,7 @@ function actualizarClases() {
     const claseGuardada = localStorage.getItem("clase");
     
     const opciones = {
-        "vikingos": ["Berserker", "Chamán", "Explorador_Vikingo", "Sanador_de_Odín"],
+        "vikingos": ["berserker", "Chamán", "Explorador_Vikingo", "Sanador_de_Odín"],
         "sajones": ["Arquero_del_Reino", "Caballero_Sajón", "Mago_Real", "Monje_Sanador"]
     };
 

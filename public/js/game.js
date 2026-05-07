@@ -1,6 +1,6 @@
 /**
  * VIKINGOS VS SAJONES 
- * Versión: Mapa con Colisiones y Árboles Ajustados
+ * Versión: Mapa Cuadrado con 3 Islas en el Mar y Lógica de Muerte
  */
 
 var scene, camera, renderer, playerModel, principalMixer, controls;
@@ -12,22 +12,20 @@ var acciones = { idle: null, walk: null, attack: null, death: null };
 var estadoActual = "idle";
 var estaVivo = true;
 
-// Arreglo para almacenar objetos con los que el personaje choca
+const MAP_SIZE = 1000;
 var objetosColision = [];
+var islasPos = []; // Guardamos posiciones de islas para detectar tierra firme
 
 const loader = new THREE.GLTFLoader();
 const dracoLoader = new THREE.DRACOLoader();
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 loader.setDRACOLoader(dracoLoader);
 
-// --- PRECARGA DE SONIDO ---
 const audioChoque = new Audio('sounds/choque.mp3');
 audioChoque.volume = 0.5;
 
 function initEngine() {
     scene = new THREE.Scene();
-
-    // Fondo Celeste Claro
     scene.background = new THREE.Color(0x87CEEB); 
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
@@ -42,8 +40,10 @@ function initEngine() {
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.minDistance = 30;
+    controls.maxDistance = 800; // Aumentado para ver las islas lejanas
+    controls.maxPolarAngle = Math.PI / 2.1;
 
-    // Luces potentes de día
     scene.add(new THREE.AmbientLight(0xffffff, 0.5));
     const sun = new THREE.DirectionalLight(0xffffff, 1.2);
     sun.position.set(500, 1000, 500);
@@ -69,43 +69,18 @@ function crearNubes() {
 }
 
 function generarNaturaleza(grupoMapa) {
-    const modelosArboles = [
-        'models/naturaleza/pino_1.glb', 
-        'models/naturaleza/arbol_frondoso.glb', 
-        'models/naturaleza/pino_alto.glb'
-    ];
-
-    const posicionesFijas = [
-        {x: -150, z: -135}, {x: 140, z: -260}, {x: -260, z: 125},
-        {x: 265, z: 270}, {x: -115, z: 280}, {x: 255, z: 115}
-    ];
-
+    const modelosArboles = ['models/naturaleza/pino_1.glb', 'models/naturaleza/arbol_frondoso.glb', 'models/naturaleza/pino_alto.glb'];
+    const posicionesFijas = [{x: -150, z: -135}, {x: 140, z: -260}, {x: -260, z: 125}, {x: 265, z: 270}, {x: -115, z: 280}, {x: 255, z: 115}];
     modelosArboles.forEach((ruta, index) => {
         loader.load(ruta, (gltf) => {
             const modeloBase = gltf.scene;
-            
             posicionesFijas.forEach((pos) => {
                 const arbol = modeloBase.clone();
-                
-                let s = 0.04; 
-                if (index === 0) s = 0.06; 
-                else if (index === 2) s = 0.045; 
-                else s = 0.035;
-
+                let s = (index === 0) ? 0.06 : (index === 2) ? 0.045 : 0.035;
                 arbol.scale.set(s, s, s);
-                const offsetX = (index * 20); 
-                const offsetZ = (index * 15);
-                arbol.position.set(pos.x + offsetX, 0, pos.z + offsetZ);
-                arbol.rotation.y = (pos.x + pos.z); 
-
-                arbol.traverse((node) => {
-                    if (node.isMesh) {
-                        node.castShadow = true;
-                        node.receiveShadow = true;
-                    }
-                });
+                arbol.position.set(pos.x + (index * 20), 0, pos.z + (index * 15));
+                arbol.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
                 grupoMapa.add(arbol);
-
                 objetosColision.push({ pos: arbol.position.clone(), radio: 2 });
             });
         });
@@ -119,25 +94,14 @@ function cargarEstructurasEspeciales(grupoMapa) {
         { archivo: 'castillo_2.glb', x: -180, z: 150, escala: 200, rot: Math.PI / 2, radioC: 30 }, 
         { archivo: 'academia_1.glb', x: 120, z: 120, escala: 200, rot: -Math.PI / 4, radioC: 20 }
     ];
-
     construcciones.forEach(obj => {
         loader.load(`models/estructuras/${obj.archivo}`, (gltf) => {
             const modelo = gltf.scene;
             modelo.scale.set(obj.escala, obj.escala, obj.escala);
-
             const caja = new THREE.Box3().setFromObject(modelo);
-            const minY = caja.min.y;
-
-            modelo.position.set(obj.x, -minY, obj.z);
+            modelo.position.set(obj.x, -caja.min.y, obj.z);
             modelo.rotation.y = obj.rot;
-
-            modelo.traverse((node) => {
-                if (node.isMesh) {
-                    node.castShadow = true;
-                    node.receiveShadow = true;
-                }
-            });
-
+            modelo.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
             grupoMapa.add(modelo);
             objetosColision.push({ pos: modelo.position.clone(), radio: obj.radioC });
         });
@@ -149,21 +113,11 @@ function crearBarco() {
     loader.load('/models/barco_vikingo.glb', (gltf) => {
         const modeloReal = gltf.scene;
         modeloReal.scale.set(2.2, 2.2, 2.2); 
-        
-        const luzBarco = new THREE.PointLight(0xffffff, 3, 100);
-        luzBarco.position.set(0, 10, 0); 
-        grupoBarco.add(luzBarco);
-
-        modeloReal.traverse((node) => {
-            if (node.isMesh) {
-                node.castShadow = true;
-                node.receiveShadow = true;
-                if(node.material) node.material.emissive = new THREE.Color(0x111111);
-            }
-        });
+        grupoBarco.add(new THREE.PointLight(0xffffff, 3, 100));
+        modeloReal.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
         grupoBarco.add(modeloReal);
     });
-    grupoBarco.position.set(490, -1.2, 0); 
+    grupoBarco.position.set(480, -1.2, 0); 
     scene.add(grupoBarco);
     return grupoBarco;
 }
@@ -174,6 +128,7 @@ window.cargarMapa = function(idMapa) {
     if (typeof VisualManager !== 'undefined') VisualManager.limpiarEscena(scene);
     if(barco) { scene.remove(barco); barco = null; navegando = false; }
     objetosColision = []; 
+    islasPos = [];
 
     const grupoMapa = new THREE.Group();
     grupoMapa.name = "MapaActual";
@@ -186,26 +141,41 @@ window.cargarMapa = function(idMapa) {
         const loaderTex = new THREE.TextureLoader();
         const texBosque = loaderTex.load(`models/mapas/texturas/${datos.textura}`);
         texBosque.wrapS = texBosque.wrapT = THREE.RepeatWrapping;
-        texBosque.repeat.set(40, 40);
+        texBosque.repeat.set(5, 5); 
         
         const matSuelo = new THREE.MeshStandardMaterial({ map: texBosque, roughness: 1, color: 0x888888 });
         const matAgua = new THREE.MeshStandardMaterial({ color: 0x003399, roughness: 0.1, metalness: 0.5 });
 
-        const agua = new THREE.Mesh(new THREE.PlaneGeometry(15000, 15000), matAgua);
+        // Agua de fondo extendida
+        const agua = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), matAgua);
         agua.rotation.x = -Math.PI / 2;
         agua.position.y = -2.5;
         grupoMapa.add(agua);
 
-        const sueloPrincipal = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), matSuelo);
+        // Suelo Principal
+        const geoSuelo = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE);
+        const sueloPrincipal = new THREE.Mesh(geoSuelo, matSuelo);
         sueloPrincipal.rotation.x = -Math.PI / 2;
         sueloPrincipal.receiveShadow = true;
         grupoMapa.add(sueloPrincipal);
 
-        // --- TU ISLA RECUPERADA ---
-        const islaPequena = new THREE.Mesh(new THREE.CircleGeometry(150, 32), matSuelo);
-        islaPequena.rotation.x = -Math.PI / 2;
-        islaPequena.position.set(1200, -0.2, 0); 
-        grupoMapa.add(islaPequena);
+        // --- 3 ISLAS EN EL MAR (FUERA DEL CUADRADO 1000x1000) ---
+        const geoIsla = new THREE.CircleGeometry(100, 32);
+        const matIsla = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+
+        const posIslas = [
+            {x: 850, z: -400}, 
+            {x: 850, z: 400}, 
+            {x: -850, z: -400}
+        ];
+
+        posIslas.forEach(p => {
+            const isla = new THREE.Mesh(geoIsla, matIsla);
+            isla.rotation.x = -Math.PI / 2;
+            isla.position.set(p.x, 0.1, p.z);
+            grupoMapa.add(isla);
+            islasPos.push(new THREE.Vector3(p.x, 0.1, p.z));
+        });
 
         generarNaturaleza(grupoMapa);
         cargarEstructurasEspeciales(grupoMapa);
@@ -220,16 +190,16 @@ window.cargarMapa = function(idMapa) {
 };
 
 function cargarPersonaje() {
-    const bando = localStorage.getItem("bando") || "vikingos";
-    const clase = localStorage.getItem("clase") || "Berserker";
+    const heroeData = JSON.parse(localStorage.getItem("personajeJugando"));
+    const bando = heroeData ? heroeData.bando.toLowerCase() : "vikingos";
+    const clase = heroeData ? heroeData.clase : "Berserker";
     const rutaPJ = `/models/${bando}/${clase}/personaje.glb`;
     loader.load(rutaPJ, (gltf) => {
         playerModel = gltf.scene;
         playerModel.scale.set(1.8, 1.8, 1.8);
         scene.add(playerModel);
         principalMixer = new THREE.AnimationMixer(playerModel);
-        const anims = ["Idle", "Walk", "attack", "death"];
-        anims.forEach(a => {
+        ["Idle", "Walk", "attack", "death"].forEach(a => {
             loader.load(`/models/animaciones/${a}.glb`, (animGltf) => {
                 const action = principalMixer.clipAction(animGltf.animations[0]);
                 acciones[a.toLowerCase()] = action;
@@ -247,104 +217,62 @@ function cambiarAnimacion(nombre) {
     estadoActual = nombre;
     if(nombre === "death") {
         estaVivo = false;
-        setTimeout(respawn, 3000); // Reseteo tras 3 seg
+        setTimeout(() => {
+            playerModel.position.set(0, 0, 0);
+            playerModel.position.y = 0;
+            estaVivo = true;
+            cambiarAnimacion("idle");
+        }, 3000);
     }
-}
-
-function respawn() {
-    playerModel.position.set(0, 0, 0);
-    camera.position.set(0, 50, 100);
-    // RESCATE DEL BARCO: Lo devuelve a su punto inicial
-    if(barco) {
-        barco.position.set(490, -1.2, 0);
-        navegando = false;
-    }
-    estaVivo = true;
-    cambiarAnimacion("idle");
-}
-
-window.addEventListener('keydown', (e) => { 
-    const key = e.key.toLowerCase();
-    teclas[key] = true; 
-    if (key === 'e' && playerModel && barco && estaVivo) {
-        const dist = playerModel.position.distanceTo(barco.position);
-        if (dist < 35) navegando = !navegando;
-    }
-});
-window.addEventListener('keyup', (e) => { teclas[e.key.toLowerCase()] = false; });
-
-function hayColision(nx, nz) {
-    if (navegando) return false; 
-    for (let obj of objetosColision) {
-        let dx = nx - obj.pos.x;
-        let dz = nz - obj.pos.z;
-        let distancia = Math.sqrt(dx * dx + dz * dz);
-        if (distancia < obj.radio) {
-            audioChoque.currentTime = 0; // Para que suene cada vez que choca
-            audioChoque.play().catch(() => {});
-            return true;
-        }
-    }
-    return false;
 }
 
 function animate() {
     requestAnimationFrame(animate);
     const delta = principalClock.getDelta();
     if (principalMixer) principalMixer.update(delta);
-    if (typeof VisualManager !== 'undefined') VisualManager.actualizarClima();
+    if (playerModel && estaVivo) {
+        
+        // --- LÓGICA DE TIERRA FIRME Y HUNDIMIENTO ---
+        const enMapaPrincipal = Math.abs(playerModel.position.x) < 500 && Math.abs(playerModel.position.z) < 500;
+        let enIslaPequena = false;
+        islasPos.forEach(isla => {
+            if (playerModel.position.distanceTo(isla) < 100) enIslaPequena = true;
+        });
 
-    if (playerModel) {
-        if (estaVivo) {
-            // LÓGICA DE HUNDIMIENTO MEJORADA
-            const fueraDeIsla = Math.abs(playerModel.position.x) > 500 || Math.abs(playerModel.position.z) > 500;
-            const sobreIslaPequena = playerModel.position.distanceTo(new THREE.Vector3(1200, 0, 0)) < 150;
+        if (!enMapaPrincipal && !enIslaPequena && !navegando) {
+            playerModel.position.y -= 5 * delta;
+            if (playerModel.position.y < -3) cambiarAnimacion("death");
+        } else if (!navegando) {
+            playerModel.position.y = 0;
+        }
+
+        let mX = 0, mZ = 0;
+        const vel = (navegando ? 45 : 30) * delta;
+        const ang = controls.getAzimuthalAngle();
+        if (teclas['w']) { mX += Math.sin(ang); mZ += Math.cos(ang); }
+        if (teclas['s']) { mX -= Math.sin(ang); mZ -= Math.cos(ang); }
+        if (teclas['a']) { mX += Math.sin(ang + Math.PI/2); mZ += Math.cos(ang + Math.PI/2); }
+        if (teclas['d']) { mX -= Math.sin(ang + Math.PI/2); mZ -= Math.cos(ang + Math.PI/2); }
+
+        if (mX !== 0 || mZ !== 0) {
+            let nX = playerModel.position.x + mX * vel;
+            let nZ = playerModel.position.z + mZ * vel;
             
-            if (fueraDeIsla && !sobreIslaPequena && !navegando) {
-                playerModel.position.y -= 5 * delta; // Se hunde visiblemente
-                if (playerModel.position.y < -3.5) {
-                    cambiarAnimacion("death");
+            // Límite del Mar (1500) - No infinito
+            if (Math.abs(nX) < 1500 && Math.abs(nZ) < 1500) {
+                let nY = navegando ? barco.position.y + 0.8 : playerModel.position.y;
+                if (navegando && barco) {
+                    barco.position.x += (nX - playerModel.position.x);
+                    barco.position.z += (nZ - playerModel.position.z);
                 }
-            } else if (!navegando) {
-                playerModel.position.y = 0;
+                camera.position.x += (nX - playerModel.position.x);
+                camera.position.z += (nZ - playerModel.position.z);
+                playerModel.position.set(nX, nY, nZ);
+                playerModel.rotation.y = Math.atan2(mX, mZ);
+                cambiarAnimacion("walk");
             }
-
-            const atacando = acciones.attack && acciones.attack.isRunning();
-            if (!atacando && estadoActual !== "death") {
-                let mX = 0, mZ = 0;
-                const vel = (navegando ? 45 : 30) * delta;
-                const ang = controls.getAzimuthalAngle();
-                if (teclas['w']) { mX += Math.sin(ang); mZ += Math.cos(ang); }
-                if (teclas['s']) { mX -= Math.sin(ang); mZ -= Math.cos(ang); }
-                if (teclas['a']) { mX += Math.sin(ang + Math.PI/2); mZ += Math.cos(ang + Math.PI/2); }
-                if (teclas['d']) { mX -= Math.sin(ang + Math.PI/2); mZ -= Math.cos(ang + Math.PI/2); }
-
-                if (mX !== 0 || mZ !== 0) {
-                    let nX = playerModel.position.x + mX * vel;
-                    let nZ = playerModel.position.z + mZ * vel;
-                    
-                    if (!hayColision(nX, nZ)) {
-                        let nY = navegando ? barco.position.y + 0.8 : playerModel.position.y;
-                        if (navegando && barco) {
-                            barco.position.x += (nX - playerModel.position.x);
-                            barco.position.z += (nZ - playerModel.position.z);
-                            barco.position.y = -1.2 + Math.sin(Date.now() * 0.002) * 0.3;
-                            nY = barco.position.y + 0.8; 
-                        }
-                        camera.position.x += (nX - playerModel.position.x);
-                        camera.position.z += (nZ - playerModel.position.z);
-                        playerModel.position.set(nX, nY, nZ);
-                        playerModel.rotation.y = Math.atan2(mX, mZ);
-                        cambiarAnimacion("walk");
-                    }
-                } else {
-                    if (navegando && barco) {
-                        barco.position.y = -1.2 + Math.sin(Date.now() * 0.002) * 0.3;
-                        playerModel.position.y = barco.position.y + 0.8;
-                    }
-                    cambiarAnimacion("idle");
-                }
-            }
+        } else {
+            if (estadoActual !== "death") cambiarAnimacion("idle");
         }
         controls.target.copy(playerModel.position);
         controls.update();
@@ -352,12 +280,14 @@ function animate() {
     renderer.render(scene, camera);
 }
 
+window.addEventListener('keydown', (e) => { 
+    teclas[e.key.toLowerCase()] = true; 
+    if (e.key.toLowerCase() === 'e' && playerModel && barco && estaVivo) {
+        if (playerModel.position.distanceTo(barco.position) < 35) navegando = !navegando;
+    }
+});
+window.addEventListener('keyup', (e) => { teclas[e.key.toLowerCase()] = false; });
+
 initEngine();
 cargarPersonaje();
 animate();
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});

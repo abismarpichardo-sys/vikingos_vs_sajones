@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salón de Héroes - Vikingos vs Sajones</title>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #c5a059; --gold-glow: rgba(197, 160, 89, 0.6); --dark-bg: #0a0a0a; }
+        
+        body { 
+            margin: 0; padding: 0; 
+            background: var(--dark-bg); 
+            color: #d2b48c; 
+            font-family: 'MedievalSharp', cursive; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: space-between; 
+            overflow: hidden;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), 
+                        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .sidebar-slots { width: 260px; padding: 40px 20px; z-index: 20; background: linear-gradient(to right, rgba(0,0,0,0.9), transparent); }
+        .sidebar-slots h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; text-shadow: 0 0 10px var(--gold-glow); font-size: 1.1em; }
+        
+        .slot-tab { height: 65px; background: rgba(20, 18, 15, 0.9); border: 1px solid #3d3428; margin-bottom: 15px; display: flex; align-items: center; padding: 0 15px; cursor: pointer; transition: 0.3s; clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%); }
+        .slot-tab:hover, .slot-tab.active { border-color: var(--gold); background: rgba(197, 160, 89, 0.2); transform: translateX(10px); box-shadow: 0 0 15px var(--gold-glow); color: #fff; }
+        .slot-tab.vacio { opacity: 0.4; border-style: dashed; }
+
+        .main-stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; justify-content: center; }
+        #visualizador-heroe { width: 100%; height: 100%; }
+
+        .hero-header { position: absolute; top: 5%; text-align: center; z-index: 10; pointer-events: none; }
+        .hero-header h1 { font-family: 'Cinzel', serif; font-size: 5em; margin: 0; color: #fff; text-shadow: 0 0 20px var(--gold), 0 0 40px var(--gold-glow); letter-spacing: 5px; }
+
+        .stats-panel { width: 340px; padding: 30px; background: linear-gradient(to left, rgba(0,0,0,0.9), transparent); z-index: 20; display: none; flex-direction: column; gap: 15px; overflow-y: auto; }
+        .section-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.1em; text-shadow: 0 0 10px var(--gold-glow); border-bottom: 1px solid #3d3428; padding-bottom: 5px; }
+        
+        .stat-row { margin-bottom: 8px; }
+        .stat-info { display: flex; justify-content: space-between; font-size: 0.85em; color: #eee; }
+        .bar-bg { background: rgba(0,0,0,0.5); height: 6px; border: 1px solid #3d3428; position: relative; }
+        .bar-fill { background: linear-gradient(to right, #8e6d31, var(--gold)); height: 100%; transition: width 1s ease-out; box-shadow: 0 0 10px var(--gold-glow); }
+
+        .btn-action { margin-top: auto; padding: 18px; background: var(--gold); color: #1a1612; border: none; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer; transition: 0.3s; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
+        
+        #loading-overlay { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); color: var(--gold); font-size: 1.1em; display: none; z-index: 5; background: rgba(0,0,0,0.85); padding: 15px; border: 1px solid var(--gold); text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-slots" id="sidebar-slots">
+        <h2>TUS GUERREROS</h2>
+    </div>
+
+    <div class="main-stage">
+        <div class="hero-header">
+            <h1 id="display-nombre">---</h1>
+            <div id="display-clase" style="letter-spacing: 10px; color: var(--gold); text-shadow: 0 0 10px var(--gold-glow);">ELIGE TU GUERRERO</div>
+        </div>
+        <div id="loading-overlay">CONVOCANDO...</div>
+        <div id="visualizador-heroe"></div>
+    </div>
+
+    <div class="stats-panel" id="stats-panel">
+        <div class="section-title">ATRIBUTOS</div>
+        <div id="stats-container"></div>
+        <div class="section-title">MECÁNICA ÚNICA</div>
+        <div id="mechanic-desc" style="font-size: 0.85em; padding: 10px; background: rgba(197,160,89,0.15); border-left: 2px solid var(--gold);">---</div>
+        <button class="btn-action" id="btn-entrar-reino">ENTRAR AL REINO</button>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.141.0/build/three.module.js",
+                "three/examples/jsm/loaders/GLTFLoader": "https://unpkg.com/three@0.141.0/examples/jsm/loaders/GLTFLoader.js",
+                "three/examples/jsm/loaders/DRACOLoader": "https://unpkg.com/three@0.141.0/examples/jsm/loaders/DRACOLoader.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+        import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
+
+        const usuario = localStorage.getItem("nombreJugador");
+        const infoClases = {
+            "berserker": { stats: { VIT: 90, MEN: 40, ATQ: 95, DEF: 60, DES: 70 }, mec: "FRENESÍ: Más daño a menos vida." },
+            "Chamán": { stats: { VIT: 60, MEN: 90, ATQ: 85, DEF: 50, DES: 65 }, mec: "SOBRECARGA: Rayo automático." },
+            "Explorador_Vikingo": { stats: { VIT: 55, MEN: 60, ATQ: 90, DEF: 40, DES: 95 }, mec: "EMBOSCADA: Ignora 50% defensa." },
+            "Sanador_de_Odín": { stats: { VIT: 80, MEN: 85, ATQ: 60, DEF: 70, DES: 50 }, mec: "TRANSFERENCIA: Cura al herir." },
+            "Caballero_Sajón": { stats: { VIT: 95, MEN: 50, ATQ: 70, DEF: 95, DES: 40 }, mec: "BLOQUEO: 80% reducción de daño." },
+            "Arquero_del_Reino": { stats: { VIT: 60, MEN: 55, ATQ: 85, DEF: 50, DES: 90 }, mec: "MARCADO: Aturde al 5to impacto." },
+            "Mago_Real": { stats: { VIT: 50, MEN: 95, ATQ: 90, DEF: 45, DES: 60 }, mec: "ENCADENAMIENTO: Magia saltarina." },
+            "Monje_Sanador": { stats: { VIT: 70, MEN: 90, ATQ: 50, DEF: 60, DES: 55 }, mec: "AURA: Curación pasiva constante." }
+        };
+
+        let scene, camera, renderer, currentModel, mixer, clock = new THREE.Clock();
+
+        function init3D() {
+            const container = document.getElementById('visualizador-heroe');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 2000);
+            camera.position.set(0, 1.8, 7.5); 
+            camera.lookAt(0, 1.0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.outputEncoding = THREE.sRGBEncoding; 
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 1.5)); 
+            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+            sun.position.set(5, 10, 7);
+            scene.add(sun);
+
+            const pedestalGeo = new THREE.CylinderGeometry(1.6, 1.8, 0.5, 32);
+            const pedestalMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 1, metalness: 0.1 });
+            const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
+            pedestal.position.set(0, -1.1, 0); 
+            scene.add(pedestal);
+
+            animate();
+        }
+
+        async function cargarPersonajes() {
+            if(!usuario) return;
+            try {
+                const res = await fetch(`/api/mis-personajes/${usuario}`);
+                const data = await res.json();
+                const sidebar = document.getElementById("sidebar-slots");
+                sidebar.innerHTML = "<h2>TUS GUERREROS</h2>";
+                
+                for (let i = 0; i < 4; i++) {
+                    const p = data.personajes.find(pers => pers.slot == i);
+                    const tab = document.createElement("div");
+                    tab.className = `slot-tab ${p ? '' : 'vacio'}`;
+                    tab.innerHTML = p ? `<div><strong>${p.nombre}</strong><br><small>${p.clase.replace(/_/g, ' ')}</small></div>` : `+ NUEVO`;
+                    
+                    tab.onclick = () => {
+                        document.querySelectorAll('.slot-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        if(p) {
+                            actualizarVista(p);
+                        } else {
+                            localStorage.setItem("currentSlot", i);
+                            window.location.href = "/seleccion";
+                        }
+                    };
+                    sidebar.appendChild(tab);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function actualizarVista(p) {
+            localStorage.setItem("personajeJugando", JSON.stringify(p));
+            document.getElementById("display-nombre").innerText = p.nombre.toUpperCase();
+            document.getElementById("display-clase").innerText = p.clase.replace(/_/g, ' ').toUpperCase();
+            document.getElementById("stats-panel").style.display = "flex";
+            const info = infoClases[p.clase] || infoClases["berserker"];
+            document.getElementById("mechanic-desc").innerText = info.mec;
+            const container = document.getElementById("stats-container");
+            container.innerHTML = "";
+            Object.keys(info.stats).forEach(s => {
+                container.innerHTML += `<div class="stat-row">
+                    <div class="stat-info"><span>${s}</span><span>${info.stats[s]}%</span></div>
+                    <div class="bar-bg"><div class="bar-fill" style="width: ${info.stats[s]}%"></div></div>
+                </div>`;
+            });
+            cargarModelo(p.bando, p.clase);
+        }
+
+        function cargarModelo(bando, clase) {
+            if (currentModel) scene.remove(currentModel);
+            const overlay = document.getElementById("loading-overlay");
+            overlay.style.display = "block";
+
+            const loader = new GLTFLoader();
+            const draco = new DRACOLoader();
+            draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            loader.setDRACOLoader(draco);
+
+            const ruta = `/models/${bando.toLowerCase()}/${clase}/personaje.glb`;
+
+            loader.load(ruta, (gltf) => {
+                currentModel = gltf.scene;
+
+                // 1. Normalización dinámica de tamaño
+                const box = new THREE.Box3().setFromObject(currentModel);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+
+                // ⭐⭐⭐ AJUSTE DE TAMAÑO ⭐⭐⭐
+                // Si aún se ven grandes, cambia este 1.6 por 1.2 o 1.0
+                const targetHeight = 0.02; 
+                const scaleFactor = targetHeight / size.y;
+                currentModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                // 2. Centrado y pegado al pedestal
+                const newBox = new THREE.Box3().setFromObject(currentModel);
+                const newCenter = new THREE.Vector3();
+                newBox.getCenter(newCenter);
+
+                currentModel.position.x = -newCenter.x;
+                currentModel.position.z = -newCenter.z;
+                // Ajustamos Y para que los pies toquen exactamente el pedestal (-0.9)
+                currentModel.position.y = -0.9 - newBox.min.y; 
+
+                scene.add(currentModel);
+                
+                if (gltf.animations.length > 0) {
+                    mixer = new THREE.AnimationMixer(currentModel);
+                    mixer.clipAction(gltf.animations[0]).play();
+                }
+                overlay.style.display = "none";
+            }, undefined, (err) => {
+                overlay.innerHTML = `ERROR RUTA:<br>${ruta}`;
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (mixer) mixer.update(clock.getDelta());
+            if (currentModel) currentModel.rotation.y += 0.005; 
+            renderer.render(scene, camera);
+        }
+
+        document.getElementById("btn-entrar-reino").onclick = () => {
+            const p = localStorage.getItem("personajeJugando");
+            if (!p) {
+                alert("Selecciona un guerrero primero.");
+                return;
+            }
+            window.location.href = '/menu';
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            init3D();
+            cargarPersonajes();
+        });
+    </script>
+</body>
+</html>
